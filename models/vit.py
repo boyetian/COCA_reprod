@@ -1,0 +1,9 @@
+import timm
+
+def get_vit(model_name='vit_base_patch16_224', pretrained=True):
+    model = timm.create_model(model_name, pretrained=pretrained)
+    return model
+
+def get_mobilevit(model_name='mobilevit_s', pretrained=True):
+    model = timm.create_model(model_name, pretrained=pretrained)
+    return model 

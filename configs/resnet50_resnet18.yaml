@@ -1,0 +1,20 @@
+model:
+  large_model:
+    name: 'resnet50'
+    pretrained: True
+  small_model:
+    name: 'resnet18'
+    pretrained: True
+
+dataset:
+  name: 'ImageNet-C'
+  path: '/path/to/your/imagenet-c'
+  batch_size: 64
+
+optimizer:
+  name: 'Adam'
+  lr: 0.001
+
+coca:
+  lambda_co_adaptation: 1.0
+  lambda_self_adaptation: 1.0 
