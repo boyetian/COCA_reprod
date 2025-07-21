@@ -1,0 +1,49 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# IDE configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+
+# Datasets
+# Ignore common data directories and file extensions.
+# The data loading scripts in `data/` will be kept.
+data/*
+!data/*.py
+!data/*.sh
+*.pth
+*.pt
+*.onnx
+*.pb
+*.csv
+*.json
+*.zip
+*.gz
+
+# Logs and caches
+*.log
+.cache/
+.pytest_cache/
+.ipynb_checkpoints
+
+# OS-specific files
+.DS_Store
+Thumbs.db
