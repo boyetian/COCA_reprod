@@ -4,13 +4,17 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
+from nltk.corpus import wordnet as wn
+import json
 
 class ImageNetC(Dataset):
-    def __init__(self, data_dir, corruption_type, severity, transform=None):
+    def __init__(self, data_dir, corruption_type, severity, transform=None, dictionary=None):
         self.data_dir = os.path.join(data_dir, corruption_type, str(severity))
         self.transform = transform
         self.images = []
         self.labels = []
+        if dictionary is None:
+            self.dictionary = json.load(open('data/imagenet_class_index.json'))
 
         for class_folder in sorted(os.listdir(self.data_dir)):
             class_path = os.path.join(self.data_dir, class_folder)
@@ -18,8 +22,14 @@ class ImageNetC(Dataset):
                 for img_name in sorted(os.listdir(class_path)):
                     img_path = os.path.join(class_path, img_name)
                     self.images.append(img_path)
-                    self.labels.append(int(class_folder))
-
+                    synset = wn.synset_from_pos_and_offset('n', int(class_folder[1:]))
+                    class_label = synset.lemmas()[0].name()
+                    if class_label in self.dictionary:
+                        class_label = self.dictionary[class_label]
+                    else:
+                        class_label = -1
+                    self.labels.append(class_label)
+                    
     def __len__(self):
         return len(self.images)
 
@@ -33,7 +43,7 @@ class ImageNetC(Dataset):
 
         return image, label
 
-def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=4):
+def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=1):
     transform = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),

@@ -8,8 +8,8 @@ model:
 
 dataset:
   name: 'ImageNet-C'
-  path: '/path/to/your/imagenet-c'
-  batch_size: 64
+  path: '/workspaces/COCA_reprod/data/Tiny-ImageNet-C'
+  batch_size: 2
 
 optimizer:
   name: 'Adam'
