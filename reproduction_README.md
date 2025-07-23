@@ -48,58 +48,11 @@ While the official repository for COCA is not yet public, the following reposito
 *   **[brdav/cma](https://github.com/brdav/cma)**: Implements "Contrastive Model Adaptation" and uses a similar setup for domain adaptation in semantic segmentation.
 *   **[mr-eggplant/FOA](https://github.com/mr-eggplant/FOA)**: Implements "Test-Time Model Adaptation with Only Forward Passes," which is a related TTA method.
 *   **[shiyegao/DDA](https://github.com/shiyegao/DDA)**: Implements "Diffusion-Driven Test-Time Adaptation," which adapts the input data instead of the model.
+ 
 
-## 5. Proposed Method (COCA)
-
-The proposed method, **COCA (Cross-Model Co-Learning for Test-Time Adaptation)**, consists of two main strategies:
-
-1.  **Co-adaptation**: This strategy adaptively integrates complementary knowledge from other models during the TTA process. This helps to reduce the biases of individual models. In the paper's example, a smaller model (Mobile-ViT) guides a larger model (ViT-Base).
-2.  **Self-adaptation**: This strategy enhances each model's unique strengths through unsupervised learning, allowing for diverse adaptation to the target domain.
-
-The key idea is that even a much smaller model can provide valuable, confident knowledge to a larger model in an unsupervised, online setting.
-
-## 6. Recommended Codebase, Filetree, and Construction
-
-Based on the analysis of related repositories, here is a recommended file structure for the project:
-
-```
-COCA_reproduction/
-├── reproduction_README.md
-├── requirements.txt
-├── configs/
-│   ├── vit_base_mobilvit.yaml
-│   └── resnet50_resnet18.yaml
-├── data/
-│   ├── download_data.sh
-│   └── imagenet_c.py
-├── models/
-│   ├── coca.py
-│   ├── vit.py
-│   └── resnet.py
-├── scripts/
-│   └── train_coca.sh
-├── main.py
-└── utils/
-    ├── augmentations.py
-    └── metrics.py
-```
-
-### Explanation of the File Structure:
-
-*   `reproduction_README.md`: The file you are currently reading.
-*   `requirements.txt`: A file listing the Python dependencies for the project.
-*   `configs/`: A directory to store configuration files for different experiments (e.g., model pairs, hyperparameters).
-*   `data/`: A directory for data loading and preparation scripts.
-    *   `download_data.sh`: A script to download and prepare the ImageNet-C dataset.
-    *   `imagenet_c.py`: A PyTorch Dataset class for ImageNet-C.
-*   `models/`: A directory for the model implementations.
-    *   `coca.py`: The core implementation of the COCA method, including the co-adaptation and self-adaptation strategies.
-    *   `vit.py`: Implementation of the Vision Transformer models (ViT-Base and Mobile-ViT).
-    *   `resnet.py`: Implementation of the ResNet models.
-*   `scripts/`: A directory for shell scripts to run experiments.
-*   `main.py`: The main script to run the training and evaluation of the models.
-*   `utils/`: A directory for utility functions.
-    *   `augmentations.py`: Data augmentation functions.
-    *   `metrics.py`: Functions to compute evaluation metrics (e.g., accuracy, ECE).
-
-This structure is modular and allows for easy extension to new models, datasets, and experiments. 
+Settings
+  - SGD with momentum of 0.9
+  - Batch_size=64
+  - Learning_rate for R and V: 0.00025 and 0.001
+  - Trainable params: only BN layers are updated
+  - ImageNet-C: exclusively select severity 5

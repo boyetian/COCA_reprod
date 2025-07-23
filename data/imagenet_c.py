@@ -43,7 +43,7 @@ class ImageNetC(Dataset):
 
         return image, label
 
-def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=1):
+def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=2):
     transform = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),

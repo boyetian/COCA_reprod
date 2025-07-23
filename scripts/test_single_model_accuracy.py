@@ -36,7 +36,11 @@ def test_single_model_accuracy():
         'digital': ['contrast', 'elastic_transform', 'pixelate', 'jpeg_compression']
     }
     all_corruptions = [corr for cat in corruption_categories.values() for corr in cat]
-    severities = [1, 2, 3, 4, 5]
+    # severities = [1, 2, 3, 4, 5]
+    severities = [5] # exclusively test severity 5
+
+    os.makedirs('results', exist_ok=True)
+    result_fname = f"results/{model_config['name']}_single_model_accuracy.txt"
 
     category_accuracies = {cat: [] for cat in corruption_categories.keys()}
 
@@ -57,6 +61,9 @@ def test_single_model_accuracy():
             
             avg_acc = total_acc / len(loader)
             print(f"Accuracy: {avg_acc}")
+            
+            with open(result_fname, 'a') as f:
+                f.write(f"{corruption}, {severity}, {avg_acc}\n")
 
             for category, corruptions_in_category in corruption_categories.items():
                 if corruption in corruptions_in_category:
@@ -67,6 +74,14 @@ def test_single_model_accuracy():
         if accuracies:
             avg_cat_acc = sum(accuracies) / len(accuracies)
             print(f"{category.capitalize()} Accuracy: {avg_cat_acc}")
+            with open(result_fname, 'a') as f:
+                f.write(f"{category.capitalize()} Accuracy: {avg_cat_acc}\n")
+        else:
+            print(f"{category.capitalize()} Accuracy: No data")
+            with open(result_fname, 'a') as f:
+                f.write(f"{category.capitalize()} Accuracy: No data\n")
+    print(f"Results saved to {result_fname}")
+    return result_fname
 
 if __name__ == '__main__':
     test_single_model_accuracy()

@@ -1,81 +1,54 @@
 import argparse
-import yaml
 import torch
 import torch.optim as optim
-from data.imagenet_c import get_imagenet_c_loader
+from torchvision import transforms
 from models.coca import COCA
-from models.vit import get_vit, get_mobilevit
-from models.resnet import get_resnet
-from utils.metrics import accuracy
-import os
+from data.imagenet_c import ImageNetC
+from scripts.test_accuracy import test_accuracy
+from models.resnet import resnet50
+from models.vit import vit_base_patch16_224
 
 def main():
     parser = argparse.ArgumentParser(description='COCA Test-Time Adaptation')
-    parser.add_argument('--config', type=str, required=True, help='Path to the config file.')
+    parser.add_argument('--config', type=str, default='configs/resnet50_vit_base.yaml', help='Path to config file')
+    parser.add_argument('--data_root', type=str, default='./data/Tiny-ImageNet-C', help='Path to ImageNet-C dataset')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training and testing')
+    parser.add_argument('--workers', type=int, default=4, help='Number of data loading workers')
+    parser.add_argument('--corruption', type=str, default='gaussian_noise', help='Type of corruption to test')
+    parser.add_argument('--severity', type=int, default=5, help='Severity of corruption')
+    parser.add_argument('--lr_anchor', type=float, default=0.00025, help='Learning rate for anchor model')
+    parser.add_argument('--lr_aux', type=float, default=0.001, help='Learning rate for auxiliary model')
+    parser.add_argument('--momentum', type=float, default=0.9, help='Momentum for SGD optimizer')
     args = parser.parse_args()
 
-    with open(args.config, 'r') as f:
-        config = yaml.safe_load(f)
+    # Load models
+    anchor_model = vit_base_patch16_224(pretrained=True)
+    aux_model = resnet50(pretrained=True)
 
-    # Create models
-    if 'vit' in config['model']['large_model']['name']:
-        large_model = get_vit(config['model']['large_model']['name'], config['model']['large_model']['pretrained'])
-    else:
-        large_model = get_resnet(config['model']['large_model']['name'], config['model']['large_model']['pretrained'])
+    # Setup COCA
+    coca = COCA(anchor_model, aux_model, lr_anchor=args.lr_anchor, lr_aux=args.lr_aux, momentum=args.momentum)
 
-    if 'mobilevit' in config['model']['small_model']['name']:
-        small_model = get_mobilevit(config['model']['small_model']['name'], config['model']['small_model']['pretrained'])
-    else:
-        small_model = get_resnet(config['model']['small_model']['name'], config['model']['small_model']['pretrained'])
+    # Data loading
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    
+    dataset = ImageNetC(root=args.data_root, corruption_type=args.corruption, severity=args.severity, transform=transform)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=True)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    large_model.to(device)
-    small_model.to(device)
+    # Training loop (Test-Time Adaptation)
+    for i, (images, _) in enumerate(data_loader):
+        if torch.cuda.is_available():
+            images = images.cuda()
+        
+        coca.update(images)
+        if (i+1) % 10 == 0:
+            print(f'Adapted on batch {i+1}/{len(data_loader)}')
 
-    # Create COCA model
-    coca_model = COCA(large_model, small_model,
-                      config['coca']['lambda_co_adaptation'],
-                      config['coca']['lambda_self_adaptation'])
-    coca_model.to(device)
-
-    # Create optimizer
-    optimizer = optim.Adam(coca_model.parameters(), lr=config['optimizer']['lr'])
-
-    # Get ImageNet-C loaders for all corruptions and severities
-    corruptions = [
-        'brightness', 'contrast', 'defocus_blur', 'elastic_transform', 'fog',
-        'frost', 'gaussian_noise', 'glass_blur', 'impulse_noise', 'jpeg_compression',
-        'motion_blur', 'pixelate', 'shot_noise', 'snow', 'zoom_blur'
-    ]
-    severities = [1, 2, 3, 4, 5]
-
-    for corruption in corruptions:
-        for severity in severities:
-            print(f"Testing on {corruption}, severity {severity}")
-            loader = get_imagenet_c_loader(config['dataset']['path'], corruption, severity,
-                                            config['dataset']['batch_size'])
-
-            coca_model.eval()
-            total_acc = 0
-            for i, (images, labels) in enumerate(loader):
-                images, labels = images.to(device), labels.to(device)
-
-                # Adapt the model
-                coca_model.train()
-                optimizer.zero_grad()
-                _, loss = coca_model(images)
-                loss.backward()
-                optimizer.step()
-
-                # Evaluate the adapted model
-                coca_model.eval()
-                with torch.no_grad():
-                    logits, _ = coca_model(images)
-                    acc = accuracy(logits, labels)
-                    total_acc += acc
-
-            print(f"Accuracy: {total_acc / len(loader)}")
-
+    # Evaluation
+    accuracy = test_accuracy(coca, args.data_root, args.batch_size, args.workers, args.corruption, args.severity)
+    print(f'Accuracy on {args.corruption} (severity {args.severity}): {accuracy:.2f}%')
 
 if __name__ == '__main__':
-    main() 
+    main()
