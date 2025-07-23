@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # This script downloads the ImageNet-C dataset.
-# Note: You will need to have an account on the ImageNet website to download the data.
 
 # Create a data directory if it doesn't exist
 # mkdir -p data
