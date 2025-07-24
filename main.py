@@ -17,8 +17,8 @@ def main():
     parser.add_argument('--workers', type=int, default=4, help='Number of data loading workers')
     parser.add_argument('--corruption', type=str, default='gaussian_noise', help='Type of corruption to test')
     parser.add_argument('--severity', type=int, default=5, help='Severity of corruption')
-    parser.add_argument('--lr_anchor', type=float, default=0.00025, help='Learning rate for anchor model')
-    parser.add_argument('--lr_aux', type=float, default=0.001, help='Learning rate for auxiliary model')
+    parser.add_argument('--lr_anchor', type=float, default=0.001, help='Learning rate for anchor model (ViT-Base)')
+    parser.add_argument('--lr_aux', type=float, default=0.00025, help='Learning rate for auxiliary model (ResNet-50)')
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum for SGD optimizer')
     args = parser.parse_args()
 
