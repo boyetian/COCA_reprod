@@ -4,7 +4,6 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
-from nltk.corpus import wordnet as wn
 import json
 from utils.augmentations import get_transform
 
@@ -15,7 +14,10 @@ class ImageNetC(Dataset):
         self.transform_aux = transform_aux
         self.image_paths = []
         self.labels = []
-        self.dictionary = json.load(open('data/imagenet_class_index.json'))
+        
+        # Create a reverse mapping from synset ID to class index
+        dictionary = json.load(open('data/imagenet_class_index.json'))
+        self.synset_to_class = {v[0]: int(k) for k, v in dictionary.items()}
 
         for class_folder in sorted(os.listdir(self.root)):
             class_path = os.path.join(self.root, class_folder)
@@ -23,12 +25,9 @@ class ImageNetC(Dataset):
                 for img_name in sorted(os.listdir(class_path)):
                     img_path = os.path.join(class_path, img_name)
                     self.image_paths.append(img_path)
-                    synset = wn.synset_from_pos_and_offset('n', int(class_folder[1:]))
-                    class_label = synset.lemmas()[0].name()
-                    if class_label in self.dictionary:
-                        class_label = self.dictionary[class_label]
-                    else:
-                        class_label = -1
+                    
+                    # Use the folder name (synset ID) to get the class label
+                    class_label = self.synset_to_class.get(class_folder, -1)
                     self.labels.append(class_label)
                     
     def __len__(self):
@@ -45,7 +44,7 @@ class ImageNetC(Dataset):
             
         return img_anchor, img_aux, label
 
-def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=2, anchor_model_name='vit_base_patch16_224', aux_model_name='resnet50'):
+def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=8, anchor_model_name='vit_base_patch16_224', aux_model_name='resnet50'):
     transform_anchor = get_transform(anchor_model_name)
     transform_aux = get_transform(aux_model_name)
 
