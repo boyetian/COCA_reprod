@@ -24,9 +24,9 @@ class COCA(nn.Module):
                 bn_params.extend([p for p in module.parameters() if p.requires_grad])
         return optim.SGD(bn_params, lr=lr, momentum=momentum)
 
-    def forward(self, x):
-        p_a = self.anchor_model(x)
-        p_s = self.aux_model(x)
+    def forward(self, x_anchor, x_aux):
+        p_a = self.anchor_model(x_anchor)
+        p_s = self.aux_model(x_aux)
         
         p_e_prime = p_a + (p_s / self.tau.detach())
         T = torch.max(p_e_prime, dim=1, keepdim=True)[0] / torch.max(p_a, dim=1, keepdim=True)[0]
@@ -34,10 +34,10 @@ class COCA(nn.Module):
         
         return p_e
 
-    def update(self, x):
+    def update(self, x_anchor, x_aux):
         # Forward pass
-        p_a = self.anchor_model(x)
-        p_s = self.aux_model(x)
+        p_a = self.anchor_model(x_anchor)
+        p_s = self.aux_model(x_aux)
 
         # 1. Update tau
         self.optimizer_tau.zero_grad()
@@ -49,7 +49,7 @@ class COCA(nn.Module):
         self.tau.data.clamp_(min=1e-6)
 
         # 2. Form ensemble prediction
-        p_e_prime = p_a + (p_s / self.tau)
+        p_e_prime = p_a + (p_s / self.tau.detach())
         T = torch.max(p_e_prime, dim=1, keepdim=True)[0].detach() / torch.max(p_a, dim=1, keepdim=True)[0].detach()
         p_e = p_e_prime / T
 
@@ -58,17 +58,18 @@ class COCA(nn.Module):
         l_mar = self.entropy_loss(p_e)
 
         # Cross-model knowledge distillation loss
-        l_ckd_a = self.kl_loss(p_a, p_e.detach())
-        l_ckd_s = self.kl_loss(p_s, p_e.detach())
+        y_hat = p_e.detach().argmax(dim=1)
+        l_ckd_a = F.cross_entropy(p_a, y_hat)
+        l_ckd_s = F.cross_entropy(p_s, y_hat)
         l_ckd = l_ckd_a + l_ckd_s
 
         # Self-adaptation loss
         l_self_a = self.entropy_loss(p_a)
         l_self_s = self.entropy_loss(p_s)
-        l_self = l_self_a + l_self_s
+        l_sa = l_self_a + l_self_s
 
         # Total loss
-        loss = l_mar + l_ckd + l_self
+        loss = l_mar + l_ckd + l_sa
 
         # Update models
         self.optimizer_anchor.zero_grad()
@@ -81,7 +82,4 @@ class COCA(nn.Module):
         p = F.softmax(logits, dim=1)
         log_p = F.log_softmax(logits, dim=1)
         return -(p * log_p).sum(dim=1).mean()
-
-    def kl_loss(self, student_logits, teacher_logits):
-        return F.kl_div(F.log_softmax(student_logits, dim=1), F.softmax(teacher_logits, dim=1), reduction='batchmean')
 

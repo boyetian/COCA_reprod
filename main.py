@@ -7,6 +7,7 @@ from data.imagenet_c import ImageNetC
 from scripts.test_accuracy import test_accuracy
 from models.resnet import resnet50
 from models.vit import vit_base_patch16_224
+from utils.augmentations import get_transform
 
 def main():
     parser = argparse.ArgumentParser(description='COCA Test-Time Adaptation')
@@ -22,6 +23,8 @@ def main():
     args = parser.parse_args()
 
     # Load models
+    anchor_model_name = 'vit_base_patch16_224'
+    aux_model_name = 'resnet50'
     anchor_model = vit_base_patch16_224(pretrained=True)
     aux_model = resnet50(pretrained=True)
 
@@ -29,20 +32,19 @@ def main():
     coca = COCA(anchor_model, aux_model, lr_anchor=args.lr_anchor, lr_aux=args.lr_aux, momentum=args.momentum)
 
     # Data loading
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+    transform_anchor = get_transform(anchor_model_name)
+    transform_aux = get_transform(aux_model_name)
     
-    dataset = ImageNetC(root=args.data_root, corruption_type=args.corruption, severity=args.severity, transform=transform)
+    dataset = ImageNetC(root=args.data_root, corruption_type=args.corruption, severity=args.severity, transform_anchor=transform_anchor, transform_aux=transform_aux)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=True)
 
     # Training loop (Test-Time Adaptation)
-    for i, (images, _) in enumerate(data_loader):
+    for i, (images_anchor, images_aux, _) in enumerate(data_loader):
         if torch.cuda.is_available():
-            images = images.cuda()
+            images_anchor = images_anchor.cuda()
+            images_aux = images_aux.cuda()
         
-        coca.update(images)
+        coca.update(images_anchor, images_aux)
         if (i+1) % 10 == 0:
             print(f'Adapted on batch {i+1}/{len(data_loader)}')
 
