@@ -2,4 +2,6 @@ import timm
 
 def get_resnet(model_name='resnet50', pretrained=True):
     model = timm.create_model(model_name, pretrained=pretrained)
-    return model 
+    return model
+
+resnet50 = lambda pretrained=True: get_resnet('resnet50', pretrained)
