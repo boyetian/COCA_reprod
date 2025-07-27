@@ -18,11 +18,31 @@ class COCA(nn.Module):
         self.optimizer_tau = optim.SGD([self.tau], lr=0.01, momentum=momentum)
 
     def setup_optimizer(self, model, lr, momentum):
-        bn_params = []
-        for module in model.modules():
-            if isinstance(module, nn.BatchNorm2d) or isinstance(module, nn.BatchNorm1d):
-                bn_params.extend([p for p in module.parameters() if p.requires_grad])
-        return optim.SGD(bn_params, lr=lr, momentum=momentum)
+        # collect all trainable normalization layer parameters
+        norm_params = []
+        for name, module in model.named_modules():
+            if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d,
+                                   nn.LayerNorm, nn.GroupNorm, nn.InstanceNorm1d,
+                                   nn.InstanceNorm2d, nn.InstanceNorm3d)):
+                for param_name, param in module.named_parameters():
+                    if param.requires_grad:
+                        norm_params.append(param)
+                        print(f"Added {name}.{param_name} to optimizer")  # 调试用
+
+        # check existence of normalization layer parameters
+        if not norm_params:
+            raise ValueError("No normalization layer parameters found! Check model architecture.")
+
+        # make sure normalization layer parameters are on the right device
+        device = next(model.parameters()).device
+        norm_params = [p.to(device) for p in norm_params]
+
+        return optim.SGD(norm_params, lr=lr, momentum=momentum)
+        # bn_params = []
+        # for module in model.modules():
+        #     if isinstance(module, nn.BatchNorm2d) or isinstance(module, nn.BatchNorm1d):
+        #         bn_params.extend([p for p in module.parameters() if p.requires_grad])
+        # return optim.SGD(bn_params, lr=lr, momentum=momentum)
 
     def forward(self, x_anchor, x_aux):
         p_a = self.anchor_model(x_anchor)
