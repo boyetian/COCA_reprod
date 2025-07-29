@@ -8,10 +8,11 @@ import json
 from utils.augmentations import get_transform
 
 class ImageNetC(Dataset):
-    def __init__(self, root, corruption_type, severity, transform_anchor=None, transform_aux=None):
+    def __init__(self, root, corruption_type, severity, transform_anchor=None, transform_aux=None, single_model=False):
         self.root = os.path.join(root, corruption_type, str(severity))
         self.transform_anchor = transform_anchor
         self.transform_aux = transform_aux
+        self.single_model = single_model
         self.image_paths = []
         self.labels = []
         
@@ -40,15 +41,23 @@ class ImageNetC(Dataset):
         image = Image.open(img_path).convert('RGB')
         
         img_anchor = self.transform_anchor(image) if self.transform_anchor else image
+        
+        if self.single_model:
+            return img_anchor, label
+
         img_aux = self.transform_aux(image) if self.transform_aux else image
             
         return img_anchor, img_aux, label
 
-def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=8, anchor_model_name='vit_base_patch16_224', aux_model_name='resnet50'):
+def get_imagenet_c_loader(data_dir, corruption_type, severity, batch_size, num_workers=8, anchor_model_name='vit_base_patch16_224', aux_model_name=None):
     transform_anchor = get_transform(anchor_model_name)
-    transform_aux = get_transform(aux_model_name)
+    
+    single_model = aux_model_name is None
+    transform_aux = None
+    if not single_model:
+        transform_aux = get_transform(aux_model_name)
 
-    dataset = ImageNetC(data_dir, corruption_type, severity, transform_anchor=transform_anchor, transform_aux=transform_aux)
+    dataset = ImageNetC(data_dir, corruption_type, severity, transform_anchor=transform_anchor, transform_aux=transform_aux, single_model=single_model)
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,

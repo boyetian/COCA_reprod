@@ -48,7 +48,10 @@ def test_single_model_accuracy():
         for severity in severities:
             print(f"Testing on {corruption}, severity {severity}")
             loader = get_imagenet_c_loader(config['dataset']['path'], corruption, severity,
-                                            config['dataset']['batch_size'])
+                                            config['dataset']['batch_size'],
+                                            num_workers=4,
+                                            anchor_model_name=model_config['name'],
+                                            aux_model_name=None)
 
             total_acc = 0
             with torch.no_grad():
