@@ -12,7 +12,7 @@ from utils.augmentations import get_transform
 def main():
     parser = argparse.ArgumentParser(description='COCA Test-Time Adaptation')
     parser.add_argument('--config', type=str, default='configs/resnet50_vit_base.yaml', help='Path to config file')
-    parser.add_argument('--data_root', type=str, default='./data/Tiny-ImageNet-C', help='Path to ImageNet-C dataset')
+    parser.add_argument('--data_root', type=str, default='./data/ImageNet-C', help='Path to ImageNet-C dataset')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training and testing')
     parser.add_argument('--workers', type=int, default=4, help='Number of data loading workers')
     parser.add_argument('--corruption', type=str, default='gaussian_noise', help='Type of corruption to test')
@@ -49,7 +49,7 @@ def main():
             print(f'Adapted on batch {i+1}/{len(data_loader)}')
 
     # Evaluation
-    accuracy = test_accuracy(coca, args.data_root, args.batch_size, args.workers, args.corruption, args.severity)
+    accuracy = test_accuracy(coca, args.data_root, args.batch_size, args.workers, args.corruption, args.severity, anchor_model_name=anchor_model_name, aux_model_name=aux_model_name)
     print(f'Accuracy on {args.corruption} (severity {args.severity}): {accuracy:.2f}%')
 
 if __name__ == '__main__':

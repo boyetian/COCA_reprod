@@ -6,8 +6,8 @@ import torch.nn.functional as F
 class COCA(nn.Module):
     def __init__(self, anchor_model, aux_model, lr_anchor=0.00025, lr_aux=0.001, momentum=0.9):
         super(COCA, self).__init__()
-        self.anchor_model = anchor_model
-        self.aux_model = aux_model
+        self.anchor_model = anchor_model.to("cuda" if torch.cuda.is_available() else "cpu")
+        self.aux_model = aux_model.to("cuda" if torch.cuda.is_available() else "cpu")
 
         # Setup optimizers for BN layers
         self.optimizer_anchor = self.setup_optimizer(self.anchor_model, lr_anchor, momentum)
