@@ -9,3 +9,4 @@ def get_mobilevit(model_name='mobilevit_s', pretrained=True):
     return model
 
 vit_base_patch16_224 = lambda pretrained=True: get_vit('vit_base_patch16_224', pretrained)
+mobilevit_s = lambda pretrained=True: get_mobilevit('mobilevit_s', pretrained)

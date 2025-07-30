@@ -3,8 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from models.resnet import resnet18, resnet50
-from models.vit import vit_base_patch16_224
-from models.mobilevit import mobilevit_s
+from models.vit import vit_base_patch16_224, mobilevit_s
 
 def get_model(model_name, pretrained=True):
     if model_name == 'resnet18':
