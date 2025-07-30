@@ -6,4 +6,4 @@
 
 # Example: ./scripts/train_coca.sh configs/vit_base_mobilvit.yaml
 
-python main.py --config $1 
+python main.py --config $1 --corruption all

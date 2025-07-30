@@ -6,6 +6,7 @@ import json
 import os
 from datetime import datetime
 import yaml
+from tqdm import tqdm
 from models.coca import COCA, get_model
 from data.imagenet_c import ImageNetC
 from scripts.test_accuracy import test_accuracy
@@ -69,14 +70,12 @@ def run_test(args, config, corruption_type):
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.workers, shuffle=True)
 
     # Training loop (Test-Time Adaptation)
-    for i, (images_anchor, images_aux, _) in enumerate(data_loader):
+    for images_anchor, images_aux, _ in tqdm(data_loader, desc=f"Adapting on {corruption_type}", leave=False):
         if torch.cuda.is_available():
             images_anchor = images_anchor.cuda()
             images_aux = images_aux.cuda()
         
         coca.update(images_anchor, images_aux)
-        if (i+1) % 10 == 0:
-            print(f'Adapted on batch {i+1}/{len(data_loader)}')
 
     # Evaluation
     accuracy = test_accuracy(coca, args.data_root, args.batch_size, args.workers, corruption_type, args.severity, anchor_model_name=anchor_model_name, aux_model_name=aux_model_name)
