@@ -2,6 +2,21 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from models.resnet import resnet18, resnet50
+from models.vit import vit_base_patch16_224
+from models.mobilevit import mobilevit_s
+
+def get_model(model_name, pretrained=True):
+    if model_name == 'resnet18':
+        return resnet18(pretrained=pretrained)
+    elif model_name == 'resnet50':
+        return resnet50(pretrained=pretrained)
+    elif model_name == 'vit_base_patch16_224':
+        return vit_base_patch16_224(pretrained=pretrained)
+    elif model_name == 'mobilevit_s':
+        return mobilevit_s(pretrained=pretrained)
+    else:
+        raise ValueError(f"Model {model_name} not found.")
 
 class COCA(nn.Module):
     def __init__(self, anchor_model, aux_model, lr_anchor=0.00025, lr_aux=0.001, momentum=0.9):
