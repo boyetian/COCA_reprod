@@ -1,0 +1,33 @@
+{
+    "timestamp": "20250730_172421",
+    "models": {
+        "anchor": "vit_base_patch16_224",
+        "auxiliary": "mobilevit_s"
+    },
+    "dataset": "ImageNet-C",
+    "severity": 5,
+    "hyperparameters": {
+        "lr_anchor": 0.001,
+        "lr_aux": 0.001,
+        "momentum": 0.9,
+        "batch_size": 32
+    },
+    "results": {
+        "gaussian_noise": "42.99%",
+        "zoom_blur": "46.07%",
+        "defocus_blur": "43.25%",
+        "jpeg_compression": "51.99%",
+        "impulse_noise": "44.37%",
+        "pixelate": "54.03%",
+        "snow": "0.12%",
+        "frost": "0.14%",
+        "glass_blur": "43.79%",
+        "contrast": "47.67%",
+        "fog": "0.10%",
+        "motion_blur": "47.23%",
+        "elastic_transform": "35.99%",
+        "shot_noise": "45.51%",
+        "brightness": "56.61%"
+    },
+    "average_accuracy": "37.32%"
+}
