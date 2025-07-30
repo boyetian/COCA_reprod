@@ -41,7 +41,7 @@ class COCA(nn.Module):
                 for param_name, param in module.named_parameters():
                     if param.requires_grad:
                         norm_params.append(param)
-                        print(f"Added {name}.{param_name} to optimizer")  # 调试用
+                        # print(f"Added {name}.{param_name} to optimizer")  # 调试用
 
         # check existence of normalization layer parameters
         if not norm_params:
