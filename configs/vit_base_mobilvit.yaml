@@ -11,7 +11,8 @@ model:
 dataset:
   name: 'ImageNet-C'
   path: './data/ImageNet-C'
-  batch_size: 64
+  batch_size: 32
+  # 64 in RTX 4080 Super(16GB) will cause OOM
 
 optimizer:
   name: 'Adam'
