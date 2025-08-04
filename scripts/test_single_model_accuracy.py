@@ -24,8 +24,9 @@ def test_single_model_accuracy():
     else:
         model = get_resnet(model_config['name'], model_config['pretrained'])
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
     model.to(device)
+    print(f'model is on {device}') # for testing
     model.eval()
 
     # Define corruption categories

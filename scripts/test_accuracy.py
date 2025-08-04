@@ -23,6 +23,8 @@ def test_accuracy(model, data_root, batch_size, workers, corruption, severity, a
         for images_anchor, _, labels in data_loader:
             if torch.cuda.is_available():
                 images_anchor, labels = images_anchor.cuda(), labels.cuda()
+            elif torch.backends.mps.is_available():
+                images_anchor, labels = images_anchor.to('mps'), labels.to('mps')
             
             outputs = model.anchor_model(images_anchor)
             _, predicted = torch.max(outputs.data, 1)

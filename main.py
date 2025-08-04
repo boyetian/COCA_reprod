@@ -74,7 +74,10 @@ def run_test(args, config, corruption_type):
         if torch.cuda.is_available():
             images_anchor = images_anchor.cuda()
             images_aux = images_aux.cuda()
-        
+        elif torch.backends.mps.is_available():  # add mps support
+            images_anchor = images_anchor.to('mps')
+            images_aux = images_aux.to('mps')
+
         coca.update(images_anchor, images_aux)
 
     # Evaluation
